@@ -9,9 +9,3 @@ Click **Add to VCC**, then install **Justper BlendShape Mesh Merge** from your p
 ALCOM users can add this package source:
 
 `https://justper247.github.io/justper-vpm-listing/index.json`
-
-## Releasing an update
-
-1. Update the version in `Packages/com.justper.blendshape-mesh-merge/package.json`.
-2. Commit and push the changes.
-3. Run the `Build Release` action on GitHub.
