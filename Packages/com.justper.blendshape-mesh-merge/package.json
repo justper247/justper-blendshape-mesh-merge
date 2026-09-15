@@ -1,0 +1,21 @@
+{
+  "name": "com.justper.blendshape-mesh-merge",
+  "displayName": "Justper BlendShape Mesh Merge",
+  "version": "1.8.2",
+  "unity": "2022.3",
+  "description": "Combines accessory meshes with a VRChat avatar mesh during Play Mode preview and avatar builds.",
+  "author": {
+    "name": "Justper",
+    "email": "justper247@users.noreply.github.com",
+    "url": "https://github.com/justper247"
+  },
+  "license": "LicenseRef-Justper-Proprietary",
+  "url": "https://github.com/justper247/justper-blendshape-mesh-merge/releases/download/1.8.2/com.justper.blendshape-mesh-merge-1.8.2.zip",
+  "changelogUrl": "https://github.com/justper247/justper-blendshape-mesh-merge/blob/main/Packages/com.justper.blendshape-mesh-merge/CHANGELOG.md",
+  "dependencies": {
+    "com.unity.collections": "2.1.4"
+  },
+  "vpmDependencies": {
+    "com.vrchat.avatars": "3.10.x"
+  }
+}

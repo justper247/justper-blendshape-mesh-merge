@@ -1,0 +1,11 @@
+/Library/
+/Temp/
+/Obj/
+/Logs/
+*.csproj
+*.sln
+*.user
+*.unitypackage
+.idea/
+.vscode/
+

@@ -1,0 +1,22 @@
+{
+  "name": "Justper.BlendShapeMeshMerge.Runtime",
+  "rootNamespace": "BlendShapeMerge",
+  "references": [
+    "VRC.SDKBase"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [
+    {
+      "name": "com.vrchat.avatars",
+      "expression": "",
+      "define": "VRC_SDK_VRCSDK3"
+    }
+  ],
+  "noEngineReferences": false
+}
