@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.8.3 - 2026-09-15
+
+- Removes duplicate legacy scripts when upgrading from the embedded Unity package to VCC.
+- Keeps prefabs, meshes, baked data, and other product files in the old folder.
+
 ## 1.8.2 - 2026-08-05
 
 - Play Mode preview now ignores disabled avatars elsewhere in the scene.
