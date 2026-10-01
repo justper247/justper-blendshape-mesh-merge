@@ -1761,7 +1761,9 @@ namespace BlendShapeMerge
         SerializedProperty autoMapVisemes;
         SerializedProperty shapeMappings;
 
+        bool showAdvanced;
         bool showMappings;
+        bool showDetails;
 
         void OnEnable()
         {
@@ -1782,14 +1784,23 @@ namespace BlendShapeMerge
         {
             serializedObject.Update();
 
-            EditorGUILayout.HelpBox(
-                "Combines accessory meshes with an avatar mesh during preview and upload. " +
-                "Original files are not changed.", MessageType.Info);
+            EditorGUILayout.LabelField(
+                "Merges during preview and upload. Original files stay unchanged.",
+                EditorStyles.wordWrappedMiniLabel);
 
             DrawDestination();
             DrawSources();
-            DrawBones();
-            DrawBlendShapes();
+
+            EditorGUILayout.Space(8);
+            showAdvanced = EditorGUILayout.Foldout(showAdvanced, "Advanced Settings", true);
+            if (showAdvanced)
+            {
+                EditorGUI.indentLevel++;
+                DrawSourceSelection();
+                DrawBones();
+                DrawBlendShapes();
+                EditorGUI.indentLevel--;
+            }
 
             serializedObject.ApplyModifiedProperties();
 
@@ -1808,14 +1819,14 @@ namespace BlendShapeMerge
 
         void DrawDestination()
         {
-            Section("1. Target Mesh");
+            Section("Avatar Mesh");
             int destination = mergeInto.enumValueIndex ==
                               (int)BlendShapeMeshMerge.TargetMode.FaceMesh ? 0 : 1;
             EditorGUI.BeginChangeCheck();
             destination = EditorGUILayout.Popup(new GUIContent(
                 "Merge Into",
-                "Face Mesh combines matching facial blendshapes. Specific Avatar Mesh merges into another skinned mesh."),
-                destination, new[] { "Face Mesh", "Specific Avatar Mesh" });
+                "Uses the face mesh assigned on the avatar, or a mesh you choose."),
+                destination, new[] { "Face Mesh (Automatic)", "Choose Mesh" });
             if (EditorGUI.EndChangeCheck())
                 mergeInto.enumValueIndex = destination == 0
                     ? (int)BlendShapeMeshMerge.TargetMode.FaceMesh
@@ -1827,7 +1838,7 @@ namespace BlendShapeMerge
                 var marker = (BlendShapeMeshMerge)target;
                 var descriptor = BlendShapeMergeProcessor.FindOwningDescriptor(marker);
                 using (new EditorGUI.DisabledScope(true))
-                    EditorGUILayout.ObjectField("Target Mesh", descriptor != null ? descriptor.VisemeSkinnedMesh : null,
+                    EditorGUILayout.ObjectField("Detected Mesh", descriptor != null ? descriptor.VisemeSkinnedMesh : null,
                         typeof(SkinnedMeshRenderer), true);
             }
             else
@@ -1837,39 +1848,21 @@ namespace BlendShapeMerge
 
         void DrawSources()
         {
-            Section("2. Accessory Meshes");
+            Section("Accessory Meshes");
 
-            var effectiveMode = EffectiveSourceMode();
-            int displayedMode = effectiveMode == BlendShapeMeshMerge.SourceSelectionMode.SelectedMeshes ? 0 : 1;
-            EditorGUI.BeginChangeCheck();
-            displayedMode = EditorGUILayout.Popup(new GUIContent(
-                    "Source Selection",
-                    "Selected Meshes merges only the listed meshes. All Child Meshes includes every Skinned Mesh " +
-                    "Renderer on this object or below it, except meshes in a nested merge group."),
-                displayedMode, new[] { "Selected Meshes", "All Child Meshes" });
-            if (EditorGUI.EndChangeCheck())
-                sourceSelectionMode.intValue = displayedMode == 0
-                    ? (int)BlendShapeMeshMerge.SourceSelectionMode.SelectedMeshes
-                    : (int)BlendShapeMeshMerge.SourceSelectionMode.AllChildMeshes;
-
-            if (displayedMode == 1)
+            if (EffectiveSourceMode() == BlendShapeMeshMerge.SourceSelectionMode.AllChildMeshes)
             {
-                EditorGUILayout.HelpBox(
-                    "Merges every Skinned Mesh Renderer on this object or below it, including inactive objects and " +
-                    "disabled renderers. Meshes below another BlendShape Mesh Merge component stay separate.",
-                    MessageType.None);
+                EditorGUILayout.LabelField("Uses all meshes on this object and its children.",
+                    EditorStyles.wordWrappedMiniLabel);
                 return;
             }
-
-            if (sourceRenderers.arraySize == 0)
-                EditorGUILayout.HelpBox("Add at least one accessory mesh.", MessageType.Warning);
 
             for (int i = 0; i < sourceRenderers.arraySize; i++)
             {
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.PropertyField(sourceRenderers.GetArrayElementAtIndex(i),
-                    new GUIContent($"Mesh {i + 1}"));
-                if (GUILayout.Button(new GUIContent("Remove", "Remove this mesh"), GUILayout.Width(62)))
+                    new GUIContent($"Mesh {i + 1}", "The accessory mesh to merge into the avatar."));
+                if (GUILayout.Button(new GUIContent("×", "Remove this mesh"), GUILayout.Width(24)))
                 {
                     MakeSourceModeExplicit();
                     RemoveArrayElement(sourceRenderers, i);
@@ -1880,6 +1873,29 @@ namespace BlendShapeMerge
             }
 
             if (GUILayout.Button("Add Mesh")) AddSource();
+        }
+
+        void DrawSourceSelection()
+        {
+            Section("Mesh Selection");
+
+            var effectiveMode = EffectiveSourceMode();
+            int displayedMode = effectiveMode == BlendShapeMeshMerge.SourceSelectionMode.SelectedMeshes ? 0 : 1;
+            EditorGUI.BeginChangeCheck();
+            displayedMode = EditorGUILayout.Popup(new GUIContent(
+                    "Include",
+                    "Selected Meshes merges only the listed meshes. All Child Meshes includes every Skinned Mesh " +
+                    "Renderer on this object or below it, except meshes in a nested merge group."),
+                displayedMode, new[] { "Selected Meshes", "All Child Meshes" });
+            if (EditorGUI.EndChangeCheck())
+                sourceSelectionMode.intValue = displayedMode == 0
+                    ? (int)BlendShapeMeshMerge.SourceSelectionMode.SelectedMeshes
+                    : (int)BlendShapeMeshMerge.SourceSelectionMode.AllChildMeshes;
+
+            if (displayedMode == 1)
+                EditorGUILayout.LabelField(
+                    "Includes inactive meshes. Nested merge groups stay separate.",
+                    EditorStyles.wordWrappedMiniLabel);
         }
 
         void AddSource()
@@ -1912,13 +1928,13 @@ namespace BlendShapeMerge
 
         void DrawBones()
         {
-            Section("3. Bones");
+            Section("Bones");
             var mode = EffectiveBoneConnectionMode();
             int displayedMode = mode == BlendShapeMeshMerge.BoneConnectionMode.Automatic ? 0 :
                 mode == BlendShapeMeshMerge.BoneConnectionMode.UseThisTool ? 1 : 2;
             EditorGUI.BeginChangeCheck();
             displayedMode = EditorGUILayout.Popup(new GUIContent(
-                    "Bone Connection",
+                    "Connect Bones",
                     "Automatic skips this tool when a supported armature-linking component already handles " +
                     "these accessory bones."),
                 displayedMode, new[] { "Automatic", "This Tool", "Do Not Connect" });
@@ -1940,11 +1956,10 @@ namespace BlendShapeMerge
 
             if (externalLinker)
                 EditorGUILayout.HelpBox(
-                    "Another armature-linking component handles these accessory bones. " +
-                    "This tool will skip bone linking.", MessageType.Info);
+                    "Another component handles the bone connection.", MessageType.Info);
             else if (mode == BlendShapeMeshMerge.BoneConnectionMode.Automatic)
                 EditorGUILayout.LabelField(
-                    "No other armature linker was found. This tool will connect matching bones.",
+                    "Connects matching bones automatically.",
                     EditorStyles.wordWrappedMiniLabel);
             else if (mode == BlendShapeMeshMerge.BoneConnectionMode.UseThisTool)
                 EditorGUILayout.HelpBox(
@@ -1952,13 +1967,13 @@ namespace BlendShapeMerge
                     MessageType.Warning);
             else
                 EditorGUILayout.LabelField(
-                    "This tool will not connect bones.", EditorStyles.wordWrappedMiniLabel);
+                    "Bones keep their existing connections.", EditorStyles.wordWrappedMiniLabel);
 
             if (!connectMatchingBones) return;
 
             EditorGUI.indentLevel++;
             EditorGUILayout.PropertyField(attachToBone, new GUIContent(
-                "Attach Extra Bone Chains",
+                "Attach Extra Bones",
                 "Attaches extra bone chains that do not have a matching avatar parent."));
             if (attachToBone.boolValue)
                 EditorGUILayout.PropertyField(attachBone, new GUIContent(
@@ -1978,7 +1993,7 @@ namespace BlendShapeMerge
 
         void DrawBlendShapes()
         {
-            Section("4. Blendshapes");
+            Section("Blendshapes");
             bool isFace = mergeInto.enumValueIndex == (int)BlendShapeMeshMerge.TargetMode.FaceMesh;
 
             if (isFace)
@@ -1986,20 +2001,18 @@ namespace BlendShapeMerge
                 EditorGUILayout.PropertyField(autoMapVisemes, new GUIContent(
                     "Match Speech Shapes",
                     "Matches common accessory speech-shape names to the speech shapes configured on the avatar."));
-                EditorGUILayout.LabelField(
-                    "Identical names match automatically. Add a different-name match only when the names differ.",
-                    EditorStyles.wordWrappedMiniLabel);
             }
-            else
-                EditorGUILayout.LabelField(
-                    "Identical names match automatically.",
-                    EditorStyles.wordWrappedMiniLabel);
+
+            EditorGUILayout.LabelField("Matching names work automatically.",
+                EditorStyles.wordWrappedMiniLabel);
 
             showMappings = EditorGUILayout.Foldout(showMappings,
-                $"Different-Name Matches ({shapeMappings.arraySize})", true);
+                $"Manual Matches ({shapeMappings.arraySize})", true);
             if (!showMappings) return;
 
             EditorGUI.indentLevel++;
+            EditorGUILayout.LabelField("Use only when the accessory and avatar shape names differ.",
+                EditorStyles.wordWrappedMiniLabel);
             GetKnownShapeNames(out var knownAccessoryShapes, out var knownAvatarShapes);
             if (shapeMappings.arraySize > 0)
             {
@@ -2055,7 +2068,7 @@ namespace BlendShapeMerge
                         MessageType.Warning);
             }
 
-            if (GUILayout.Button("Add Different-Name Match"))
+            if (GUILayout.Button("Add Match"))
             {
                 int index = shapeMappings.arraySize;
                 shapeMappings.InsertArrayElementAtIndex(index);
@@ -2122,10 +2135,8 @@ namespace BlendShapeMerge
             array.DeleteArrayElementAtIndex(index);
         }
 
-        static void DrawSetupCheck(BlendShapeMeshMerge marker)
+        void DrawSetupCheck(BlendShapeMeshMerge marker)
         {
-            EditorGUILayout.LabelField("Setup Check", EditorStyles.boldLabel);
-
             var descriptor = BlendShapeMergeProcessor.FindOwningDescriptor(marker);
             if (descriptor == null)
             {
@@ -2228,7 +2239,6 @@ namespace BlendShapeMerge
                   "but review the warnings below."
                 : $"Ready: {sources.Count} mesh{(sources.Count == 1 ? "" : "es")} will merge into " +
                   $"{mergeTarget.name}{(isFace ? " (Face Mesh)" : "")}.";
-            info += details;
             EditorGUILayout.HelpBox(info, hasWarning ? MessageType.Warning : MessageType.Info);
 
             if (isFace && visemeTotal == 0)
@@ -2245,6 +2255,10 @@ namespace BlendShapeMerge
                     $"{string.Join(", ", visibilityWarnings)}: current GameObject or renderer visibility will no " +
                     "longer control the merged geometry. Visibility will follow the Target Mesh.",
                     MessageType.Warning);
+
+            showDetails = EditorGUILayout.Foldout(showDetails, "Details", true);
+            if (showDetails)
+                EditorGUILayout.HelpBox(details.TrimStart(), MessageType.None);
         }
     }
 }

@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.8.4 - 2026-10-02
+
+- Simplified the main inspector to avatar mesh, accessory meshes, and merge status.
+- Moved optional settings into Advanced Settings and diagnostic counts into Details.
+- Shortened labels and removed duplicate headings.
+- Kept existing settings and merge behavior.
+- Corrected the version shown in the inspector.
+- Unity package downloads now import into Assets/01 - Justper/Tools/BlendShapeMeshMerge.
+
 ## 1.8.3 - 2026-09-15
 
 - Removes duplicate legacy scripts when upgrading from the embedded Unity package to VCC.
