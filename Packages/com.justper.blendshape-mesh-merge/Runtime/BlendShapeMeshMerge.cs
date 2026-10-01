@@ -1,5 +1,5 @@
 // ============================================================
-//  BlendShape Mesh Merge  (v1.8.2) - runtime marker component
+//  BlendShape Mesh Merge  (v1.8.4) - runtime marker component
 //
 //  Non-destructively merges meshes at build time, combining
 //  blendshapes by name. One component = one merge group,
@@ -25,7 +25,7 @@ namespace BlendShapeMerge
         , IEditorOnly
 #endif
     {
-        public const string ToolVersion = "1.8.2";
+        public const string ToolVersion = "1.8.4";
 
         public enum TargetMode { FaceMesh, CustomRenderer }
 
@@ -70,14 +70,12 @@ namespace BlendShapeMerge
         [HideInInspector]
         public bool remapBonesByName = true;
 
-        [Header("Fallback Attachment")]
         [Tooltip("Attaches extra bone chains that do not have a matching avatar parent.")]
         public bool attachToBone = true;
 
         [Tooltip("The avatar bone that extra chains follow.")]
         public HumanBodyBones attachBone = HumanBodyBones.Head;
 
-        [Header("Blendshape Mapping")]
         [Tooltip("Matches common accessory speech-shape names to the speech shapes configured on the avatar.")]
         public bool autoMapVisemes = true;
 

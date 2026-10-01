@@ -33,14 +33,26 @@ jobs:
         working-directory: "${{ env.packagePath }}"
         run: zip -r "${{ github.workspace }}/${{ env.zipFile }}" .
 
-      - name: Track package meta files
-        run: find "${{ env.packagePath }}/" -name \*.meta >> metaList
+      - name: Stage Unity package
+        run: |
+          toolPath="Assets/01 - Justper/Tools/BlendShapeMeshMerge"
+          mkdir -p "UnityPackage/$toolPath/Editor"
+          cp "${{ env.packagePath }}/Runtime/BlendShapeMeshMerge.cs" "${{ env.packagePath }}/Runtime/BlendShapeMeshMerge.cs.meta" "UnityPackage/$toolPath/"
+          cp "${{ env.packagePath }}/Editor/"*.cs "${{ env.packagePath }}/Editor/"*.cs.meta "UnityPackage/$toolPath/Editor/"
+          cp "${{ env.packagePath }}/Editor.meta" "UnityPackage/$toolPath/Editor.meta"
+          cp .github/unitypackage/BlendShapeMeshMerge.meta "UnityPackage/$toolPath.meta"
+          for doc in README.md CHANGELOG.md LICENSE.md; do
+            cp "${{ env.packagePath }}/$doc" "${{ env.packagePath }}/$doc.meta" "UnityPackage/$toolPath/"
+          done
+          cd UnityPackage
+          find Assets -name '*.meta' | sort > ../metaList
 
       - name: Create unitypackage
         uses: pCYSl5EDgo/create-unitypackage@v1.2.3
         with:
           package-path: ${{ env.unityPackage }}
           include-files: metaList
+          project-folder: UnityPackage
 
       - name: Create version tag
         uses: rickstaa/action-create-tag@88dbf7ff6fe2405f8e8f6c6fdfd78829bc631f83
@@ -55,4 +67,3 @@ jobs:
             ${{ env.unityPackage }}
             ${{ env.packagePath }}/package.json
           tag_name: ${{ env.version }}
-
